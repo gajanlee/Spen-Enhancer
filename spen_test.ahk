@@ -6,7 +6,7 @@ SetWorkingDir %A_ScriptDir%
 
 Gui, +Resize
 Gui, Add, Text, vinfo, Spen Info
-Gui, Add, Text, vmsg, Please use your Spen to trigger info
+Gui, Add, Text, w300 vmsg, Please use your Spen to trigger info
 Gui, Add, Text, r1 w300 vproc, proc: 
 Gui, Add, Text, r1 w300 vxptr, X: 
 Gui, Add, Text, r1 w300 vyptr, Y: 
@@ -17,10 +17,10 @@ Gui, Show, w300 h300
 ; S-Pen info constants
 ; You can get it through the GUI
 global SPEN_NOT_HOVERING := 0x0
-global SPEN_HOVERING := 0x0
-global SPEN_TOUCHING := 0x1
-global SPEN_BTN_HOVERING := 0x8
-global SPEN_BTN_TOUCHING := 0xC
+global SPEN_HOVERING := 0x20
+global SPEN_TOUCHING := 0x21
+global SPEN_BTN_HOVERING := 0x28
+global SPEN_BTN_TOUCHING := 0x2C
 
 WM_INPUT := 0xFF
 USAGE_PAGE := 13
@@ -43,7 +43,7 @@ InputMsg(wParam, lParam) {
         data := AHKHID_GetInputData(lParam, uData)
 
         rawData := NumGet(uData, 0, "UInt")
-        proc := (rawData >> 8) & 0x1F
+        proc := (rawData >> 8) & 0x3F
         xPointer := NumGet(uData, 2, "UShort")
         yPointer := NumGet(uData, 4, "UShort")
         pressure := NumGet(uData, 6, "UShort")
@@ -68,12 +68,18 @@ PenActionCallBack(proc) {
 
 ; do something you want
 PenCallBack(proc, lastProc) {
-    If (lastProc = SPEN_HOVERING and proc = SPEN_BTN_HOVERING) {
-        GuiControl,, msg, You Clicked the S-Pen Button.
-    } Else If (lastProc = SPEN_HOVERING and proc = SPEN_TOUCHING) {
+    If (proc = SPEN_NOT_HOVERING) {
+        GuiControl,, msg, You have left the Screen.
+    } Else If (proc = SPEN_HOVERING) {
+        GuiControl,, msg, You leave the Screen but still hovering.
+    } Else If (proc = SPEN_TOUCHING) {
         GuiControl,, msg, You touch the Screen.
-    } Else If (lastProc = SPEN_TOUCHING and proc = SPEN_HOVERING) {
-        GuiControl,, msg, You leave the Screen.
+    } Else If (proc = SPEN_BTN_HOVERING) {
+        GuiControl,, msg, Click and Hovering.
+    } Else If (proc = SPEN_BTN_TOUCHING) {
+        GuiControl,, msg, Click and Touching.
+    } Else If (lastProc = SPEN_NOT_HOVERING) {
+        GuiControl,, msg, You are interacting with the screen.
     } Else {
         GuiControl,, msg, You do something undefined.
     }
